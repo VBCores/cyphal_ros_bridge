@@ -39,7 +39,9 @@ BridgeNode::BridgeNode(const std::string& config_file_name, std::shared_ptr<ros:
         DEFAULT_CONFIG
     ));
 
-    const json& connections = config_json.at("connections");
+    for (const json& connection: config_json.at("connections")) {
+        add_connection(connection);
+    }
 
     interface->start_threads();
 }
@@ -71,4 +73,9 @@ void BridgeNode::hbeat_cb(const ros::TimerEvent& event) {
         &hbeat_transfer_id
     );
     uptime += 1;
+}
+
+
+void BridgeNode::add_connection(const json& connection) {
+    std::cout << connection.at("type") << std::endl;
 }
