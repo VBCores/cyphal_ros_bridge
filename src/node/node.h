@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include <json.hpp>
 #include <ros/ros.h>
@@ -29,6 +30,9 @@ private:
     std::shared_ptr<ros::NodeHandle> node_handle;
     std::shared_ptr<CyphalInterface> interface;
     ros::Timer hbeat_timer;
+
+    std::vector<std::unique_ptr<TransferListener>> cyphal_subscriptions;
+    std::vector<ros::Subscriber> ros_subscriptions;
 
     void add_connection(const json& connection);
     void hbeat_cb(const ros::TimerEvent& event);

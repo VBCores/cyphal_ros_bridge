@@ -1,0 +1,31 @@
+{
+    "node_id": 99,
+    "interface": "vcan1",
+    "connections": [
+        {
+            "type": "voltbro.battery.state",
+            "cyphal": {
+                "port": 7993
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "read",
+                "name": "/bat"
+            }
+        },
+        {
+          "type": "uavcan.primitives.Float32",
+          "cyphal": {
+              "port": {
+                  "read": 4321,
+                  "write": 4322
+              }
+          },
+          "ros": {
+              "type": "topic",
+              "direction": "bi",
+              "name": "/wheel/1/speed"
+          }
+      }
+    ]
+}

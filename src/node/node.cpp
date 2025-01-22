@@ -29,7 +29,7 @@ BridgeNode::BridgeNode(const std::string& config_file_name, std::shared_ptr<ros:
 
     const CanardNodeID node_id = config_json.at("node_id");
     const std::string& interface_name = config_json.at("interface");
-    std::cout << "Setting up cyphal with node_id <" << +node_id << ">" << ", interface <" << interface_name << ">" << std::endl;
+    std::cout << "Setting up cyphal with <node_id: " << +node_id << ">" << ", interface: " << interface_name << ">" << std::endl;
 
     interface = std::shared_ptr<CyphalInterface>(CyphalInterface::create_heap<LinuxCAN, O1Allocator>(
         node_id,
@@ -83,22 +83,29 @@ void BridgeNode::add_connection(const json& connection) {
     const std::string& cyphal_type = connection.at("type");
 
     const auto& cyphal_info = connection.at("cyphal");
-    const auto& port_info = cyphal_info.at("port");
-    CanardPortID read_port;
-    CanardPortID write_port;
-    switch (port_info.type()) {
-        case json::value_t::object:
-            read_port = static_cast<CanardPortID>(port_info.at("read"));
-            write_port = static_cast<CanardPortID>(port_info.at("write"));
-            break;
-        default:
-            read_port = write_port = static_cast<CanardPortID>(port_info);
+    bool has_register_name = cyphal_info.contains("register");
+    const std::string register_name = has_register_name ? static_cast<std::string>(cyphal_info.at("register")) : "";
+    CanardPortID read_port = 0;
+    CanardPortID write_port = 0;
+    if (cyphal_info.contains("port")) {
+        if (has_register_name) {
+            parsing_error("Register prohibits custom ports");
+        }
+        const auto& port_info = cyphal_info.at("port");
+        switch (port_info.type()) {
+            case json::value_t::object:
+                read_port = static_cast<CanardPortID>(port_info.at("read"));
+                write_port = static_cast<CanardPortID>(port_info.at("write"));
+                break;
+            default:
+                read_port = write_port = static_cast<CanardPortID>(port_info);
+        }
     }
     bool has_target_id = cyphal_info.contains("node");
-    CanardNodeID target_node_id = 0;
-    if (has_target_id) {
-        target_node_id = static_cast<CanardNodeID>(cyphal_info.at("node"));
+    if (!has_target_id && has_register_name) {
+        parsing_error("Register requires target node");
     }
+    const CanardNodeID target_node_id = has_target_id ? static_cast<CanardNodeID>(cyphal_info.at("node")) : 0;
 
     const auto& ros_info = connection.at("ros");
     const std::string& ros_name = ros_info.at("name");
@@ -140,21 +147,49 @@ void BridgeNode::add_connection(const json& connection) {
         }
     }
 
-    std::cout << "Creating connection with type: " << cyphal_type << ", "
+    std::cout << "Creating connection with <type: " << cyphal_type << ", "
+        << "register: " << register_name << ", node_id: " << +target_node_id << ", "
         << "read_port: " << +read_port << ", write_port: " << + write_port << ", "
-        << "node_id: " << +target_node_id << ", ros_name: " << ros_name << ", "
+        << "ros_name: " << ros_name << ", "
         << "ros_type: " << (ros_type == ROSType::TOPIC ? "topic" : "service") << ", "
         << "ros_direction: " << (
             ros_direction == ROSDirection::READ ?
                 "read" :
                 (ros_direction == ROSDirection::WRITE ? "write" : "bi")
         )
-        << std::endl;
+        << ">" << std::endl;
 
-    /*
-    std::shared_ptr<CanardRxSubscription> sub = std::make_shared<CanardRxSubscription>();
-    sub->user_reference = static_cast<void*>(listener);
+    if (ros_type == ROSType::TOPIC) {
+        if (ros_direction == ROSDirection::READ || ros_direction == ROSDirection::BI) {
+            auto cyphal_sub = create_cyphal_to_ros_connector(
+                cyphal_type,
+                node_handle,
+                ros_name,
+                interface,
+                read_port
+            );
+            if (cyphal_sub) {
+                cyphal_subscriptions.push_back(std::move(cyphal_sub));
+            }
+            else {
+                // TODO
+            }
+        }
+        if (ros_direction == ROSDirection::WRITE || ros_direction == ROSDirection::BI) {
+            auto ros_sub = create_ros_to_cyphal_connector(
+                cyphal_type,
+                node_handle,
+                ros_name,
+                interface,
+                write_port
+            );
+            if (ros_sub) {
+                ros_subscriptions.push_back(ros_sub.value());
+            }
+            else {
+                // TODO
+            }
+        }
+    }
 
-    interface->subscribe(port_id, T::extent, kind, &sub);
-    */
 }
