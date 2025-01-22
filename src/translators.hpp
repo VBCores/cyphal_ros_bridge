@@ -77,7 +77,6 @@ std::optional<ros::Subscriber> create_ros_to_cyphal_connector (
         };
         return node_handle->subscribe<std_msgs::Float32>(topic_name, 5, cb);
     }
-
     return std::nullopt;
 }
 

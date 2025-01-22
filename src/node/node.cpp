@@ -46,6 +46,10 @@ BridgeNode::BridgeNode(const std::string& config_file_name, std::shared_ptr<ros:
 }
 
 BridgeNode::~BridgeNode() {
+    for (auto& ptr: cyphal_subscriptions) {
+        ptr.reset();
+    }
+
     if (interface->is_up()) {
         std::cout << "Processing last CAN TX messages. Deadline: +5s" << std::endl;
         uint64_t start = timeMillis();
@@ -57,7 +61,7 @@ BridgeNode::~BridgeNode() {
         std::cout << "All messages processed" << std::endl;
     }
 
-    std::cout << "Destroying CyphalInterface" << std::endl;
+    std::cout << "Freeing CyphalInterface" << std::endl;
     interface.reset();
     std::cout << "CyphalInterface exists: " << bool(interface) << std::endl;
 }
