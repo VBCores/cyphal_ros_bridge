@@ -2,8 +2,7 @@
 
 #include <iostream>
 #include <fstream>
-
-#include <json.hpp>
+#include <cstdlib>
 
 #include <cyphal/providers/LinuxCAN.h>
 #include <cyphal/allocators/o1/o1_allocator.h>
@@ -14,11 +13,11 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 
 #include "common.hpp"
+#include "translators.hpp"
 
 TYPE_ALIAS(HBeat, uavcan_node_Heartbeat_1_0)
 
 using namespace CyphalROS;
-using json = nlohmann::json;
 
 BridgeNode::BridgeNode(const std::string& config_file_name, std::shared_ptr<ros::NodeHandle> node_handle_ptr):
     node_handle(node_handle_ptr),
@@ -75,7 +74,87 @@ void BridgeNode::hbeat_cb(const ros::TimerEvent& event) {
     uptime += 1;
 }
 
+void BridgeNode::parsing_error(const std::string& error) {
+    std::cout << "Parsing error! " << error << std::endl;
+    std::exit(1);
+}
 
 void BridgeNode::add_connection(const json& connection) {
-    std::cout << connection.at("type") << std::endl;
+    const std::string& cyphal_type = connection.at("type");
+
+    const auto& cyphal_info = connection.at("cyphal");
+    const auto& port_info = cyphal_info.at("port");
+    CanardPortID read_port;
+    CanardPortID write_port;
+    switch (port_info.type()) {
+        case json::value_t::object:
+            read_port = static_cast<CanardPortID>(port_info.at("read"));
+            write_port = static_cast<CanardPortID>(port_info.at("write"));
+            break;
+        default:
+            read_port = write_port = static_cast<CanardPortID>(port_info);
+    }
+    bool has_target_id = cyphal_info.contains("node");
+    CanardNodeID target_node_id = 0;
+    if (has_target_id) {
+        target_node_id = static_cast<CanardNodeID>(cyphal_info.at("node"));
+    }
+
+    const auto& ros_info = connection.at("ros");
+    const std::string& ros_name = ros_info.at("name");
+    ROSType ros_type = ROSType::TOPIC;
+    const std::string& ros_type_info = ros_info.value("type", "topic");
+    if (ros_type_info == "topic") {
+        ros_type = ROSType::TOPIC;
+    }
+    else if (ros_type_info == "service") {
+        ros_type = ROSType::SERVICE;
+    }
+    else {
+        parsing_error("Unsupported ros.type: <" + ros_type_info + ">");
+    }
+    ROSDirection ros_direction;
+    if (ros_type == ROSType::TOPIC) {
+        ros_direction = ROSDirection::READ;
+    }
+    else {
+        ros_direction = ROSDirection::WRITE;
+    }
+    if (ros_info.contains("direction")) {
+        if (ros_type == ROSType::SERVICE) {
+            parsing_error("Direction is not supported for ros services");
+        }
+
+        const std::string& ros_direction_info = ros_info.at("direction");
+        if (ros_direction_info == "write") {
+            ros_direction = ROSDirection::WRITE;
+        }
+        else if (ros_direction_info == "read") {
+            ros_direction = ROSDirection::READ;
+        }
+        else if (ros_direction_info == "bi") {
+            ros_direction = ROSDirection::BI;
+        }
+        else {
+            parsing_error("Unsupported ros.direction: <" + ros_direction_info + ">");
+        }
+    }
+
+    std::cout << "Creating connection with type: " << cyphal_type << ", "
+        << "read_port: " << +read_port << ", write_port: " << + write_port << ", "
+        << "node_id: " << +target_node_id << ", ros_name: " << ros_name << ", "
+        << "ros_type: " << (ros_type == ROSType::TOPIC ? "topic" : "service") << ", "
+        << "ros_direction: " << (
+            ros_direction == ROSDirection::READ ?
+                "read" :
+                (ros_direction == ROSDirection::WRITE ? "write" : "bi")
+        )
+        << std::endl;
+
+    /*
+    std::shared_ptr<CanardRxSubscription> sub = std::make_shared<CanardRxSubscription>();
+    sub->user_reference = static_cast<void*>(listener);
+
+    interface->subscribe(port_id, T::extent, kind, &sub);
+    */
 }
