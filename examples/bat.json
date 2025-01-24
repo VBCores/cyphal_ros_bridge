@@ -3,7 +3,7 @@
     "interface": "vcan1",
     "connections": [
         {
-            "type": "voltbro.battery.state",
+            "type": "Battery",
             "cyphal": {
                 "port": 7993
             },
@@ -14,18 +14,29 @@
             }
         },
         {
-          "type": "uavcan.primitives.Float32",
-          "cyphal": {
-              "port": {
-                  "read": 4321,
-                  "write": 4322
-              }
-          },
-          "ros": {
-              "type": "topic",
-              "direction": "bi",
-              "name": "/wheel/1/speed"
-          }
-      }
+            "type": "Diagnostic",
+            "cyphal": {
+                "port": 8184
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "bi",
+                "name": "/diagnostic"
+            }
+        },
+        {
+            "type": "Float32",
+            "cyphal": {
+                "port": {
+                    "read": 4321,
+                    "write": 4322
+                }
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "bi",
+                "name": "/wheel/1/speed"
+            }
+        }
     ]
 }

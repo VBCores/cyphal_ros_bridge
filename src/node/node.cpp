@@ -13,7 +13,7 @@
 #include <uavcan/node/Heartbeat_1_0.h>
 
 #include "common.hpp"
-#include "translators.hpp"
+#include "translators/translators.hpp"
 
 TYPE_ALIAS(HBeat, uavcan_node_Heartbeat_1_0)
 
@@ -29,7 +29,7 @@ BridgeNode::BridgeNode(const std::string& config_file_name, std::shared_ptr<ros:
 
     const CanardNodeID node_id = config_json.at("node_id");
     const std::string& interface_name = config_json.at("interface");
-    std::cout << "Setting up cyphal with <node_id: " << +node_id << ">" << ", interface: " << interface_name << ">" << std::endl;
+    std::cout << "Setting up cyphal with <node_id: " << +node_id << ", interface: " << interface_name << ">" << std::endl;
 
     interface = std::shared_ptr<CyphalInterface>(CyphalInterface::create_heap<LinuxCAN, O1Allocator>(
         node_id,
@@ -79,12 +79,12 @@ void BridgeNode::hbeat_cb(const ros::TimerEvent& event) {
 }
 
 void BridgeNode::parsing_error(const std::string& error) {
-    std::cout << "Parsing error! " << error << std::endl;
+    std::cerr << "Parsing error! " << error << std::endl;
     std::exit(1);
 }
 
 void BridgeNode::add_connection(const json& connection) {
-    const std::string& cyphal_type = connection.at("type");
+    const std::string& type_id = connection.at("type");
 
     const auto& cyphal_info = connection.at("cyphal");
     bool has_register_name = cyphal_info.contains("register");
@@ -151,7 +151,7 @@ void BridgeNode::add_connection(const json& connection) {
         }
     }
 
-    std::cout << "Creating connection with <type: " << cyphal_type << ", "
+    std::cout << "Creating connection with <type: " << type_id << ", "
         << "register: " << register_name << ", node_id: " << +target_node_id << ", "
         << "read_port: " << +read_port << ", write_port: " << + write_port << ", "
         << "ros_name: " << ros_name << ", "
@@ -163,10 +163,12 @@ void BridgeNode::add_connection(const json& connection) {
         )
         << ">" << std::endl;
 
+    bool type_found = false;
+
     if (ros_type == ROSType::TOPIC) {
         if (ros_direction == ROSDirection::READ || ros_direction == ROSDirection::BI) {
             auto cyphal_sub = create_cyphal_to_ros_connector(
-                cyphal_type,
+                type_id,
                 node_handle,
                 ros_name,
                 interface,
@@ -174,26 +176,27 @@ void BridgeNode::add_connection(const json& connection) {
             );
             if (cyphal_sub) {
                 cyphal_subscriptions.push_back(std::move(cyphal_sub));
-            }
-            else {
-                // TODO
+                type_found = true;
             }
         }
         if (ros_direction == ROSDirection::WRITE || ros_direction == ROSDirection::BI) {
             auto ros_sub = create_ros_to_cyphal_connector(
-                cyphal_type,
+                type_id,
                 node_handle,
                 ros_name,
                 interface,
-                write_port
+                write_port,
+                transfer_id_map
             );
             if (ros_sub) {
                 ros_subscriptions.push_back(ros_sub.value());
-            }
-            else {
-                // TODO
+                type_found = true;
             }
         }
+    }
+
+    if (!type_found) {
+        parsing_error("Match not found: <type: " + type_id + ", ros_type: " + ros_type_info + ">");
     }
 
 }
