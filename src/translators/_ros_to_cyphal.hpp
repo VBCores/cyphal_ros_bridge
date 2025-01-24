@@ -17,10 +17,7 @@ void ros_callback_to_cyphal(
     const std::shared_ptr<CanardTransferID>& transfer_id,
     const typename FromROSType::ConstPtr& ros_msg_ptr
 ) {
-    typename ToCyphalType::Type cyphal_msg = translate_ros_msg<
-        typename FromROSType::ConstPtr,
-        typename ToCyphalType::Type
-    > (ros_msg_ptr);
+    typename ToCyphalType::Type cyphal_msg = translate_ros_msg(ros_msg_ptr);
     interface->send_msg<ToCyphalType>(&cyphal_msg, port_id, transfer_id.get());
 }
 
@@ -31,7 +28,6 @@ void ros_callback_to_cyphal(
         };                                                                                                   \
         return node_handle->subscribe<ros_type>(topic_name, 10, cb);                                          \
     }
-
 
 inline std::optional<ros::Subscriber> create_ros_to_cyphal_connector(
     const std::string& type_id,

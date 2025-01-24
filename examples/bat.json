@@ -24,6 +24,7 @@
                 "name": "/diagnostic"
             }
         },
+
         {
             "type": "Float32",
             "cyphal": {

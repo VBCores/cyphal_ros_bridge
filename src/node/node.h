@@ -40,7 +40,7 @@ private:
     void hbeat_cb(const ros::TimerEvent& event);
     void parsing_error(const std::string& error);
 public:
-    BridgeNode(const std::string& config_file_name, std::shared_ptr<ros::NodeHandle> node_handle_ptr);
+    BridgeNode(const json& config_json, std::shared_ptr<ros::NodeHandle> node_handle_ptr);
     ~BridgeNode();
 };
 

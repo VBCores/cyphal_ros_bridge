@@ -19,40 +19,44 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 cmake_print_variables(SOURCES)
 
 find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  message_runtime
-  roscpp
-  sensor_msgs
-  std_msgs
+    message_generation
+    message_runtime
+    roscpp
+    sensor_msgs
+    std_msgs
 )
 
 ## Generate messages in the 'msg' folder
- add_message_files(FILES
+add_message_files(FILES
     HMILed.msg
     HMIBeeper.msg
     PowerButtons.msg
 )
- generate_messages(
-   DEPENDENCIES
-   std_msgs
+add_service_files(FILES
+    CallHMILed.srv
+    CallHMIBeeper.srv
+)
+generate_messages(
+    DEPENDENCIES
+    std_msgs
 )
 
 catkin_package(CATKIN_DEPENDS message_runtime)
 
 include_directories(
-  include
-  src
-  libs/types
-  libs/libvoltbro
-  libs/nlohmann
-  ${catkin_INCLUDE_DIRS}
-  ${Eigen_INCLUDE_DIRS}
-  ${CYPHAL_DIR}
-  ${COMMON_LIBS_DIR}
-  ${Boost_INCLUDE_DIRS}
+    include
+    src
+    libs/types
+    libs/libvoltbro
+    libs/nlohmann
+    ${catkin_INCLUDE_DIRS}
+    ${Eigen_INCLUDE_DIRS}
+    ${CYPHAL_DIR}
+    ${COMMON_LIBS_DIR}
+    ${Boost_INCLUDE_DIRS}
 )
 link_libraries(
-  libcxxcanard
+    libcxxcanard
 )
 set(COMPILE_FEATS c_std_99 cxx_std_17)
 
@@ -61,13 +65,13 @@ target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} libcxxcanard)
 target_compile_features(${PROJECT_NAME}_node PUBLIC ${COMPILE_FEATS})
 
 install(TARGETS libcxxcanard
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 install(TARGETS ${PROJECT_NAME}_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

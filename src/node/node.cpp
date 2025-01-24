@@ -1,7 +1,6 @@
 #include "node.h"
 
 #include <iostream>
-#include <fstream>
 #include <cstdlib>
 
 #include <cyphal/providers/LinuxCAN.h>
@@ -19,14 +18,10 @@ TYPE_ALIAS(HBeat, uavcan_node_Heartbeat_1_0)
 
 using namespace CyphalROS;
 
-BridgeNode::BridgeNode(const std::string& config_file_name, std::shared_ptr<ros::NodeHandle> node_handle_ptr):
+BridgeNode::BridgeNode(const json& config_json, std::shared_ptr<ros::NodeHandle> node_handle_ptr):
     node_handle(node_handle_ptr),
     hbeat_timer(node_handle->createTimer(ros::Duration(1), &BridgeNode::hbeat_cb, this))
     {
-    std::cout << config_file_name << std::endl;
-    std::ifstream config_file_stream(config_file_name);
-    json config_json = json::parse(config_file_stream);
-
     const CanardNodeID node_id = config_json.at("node_id");
     const std::string& interface_name = config_json.at("interface");
     std::cout << "Setting up cyphal with <node_id: " << +node_id << ", interface: " << interface_name << ">" << std::endl;
@@ -133,7 +128,7 @@ void BridgeNode::add_connection(const json& connection) {
     }
     if (ros_info.contains("direction")) {
         if (ros_type == ROSType::SERVICE) {
-            parsing_error("Direction is not supported for ros services");
+            parsing_error("Direction is not supported for ROS services");
         }
 
         const std::string& ros_direction_info = ros_info.at("direction");
@@ -164,7 +159,6 @@ void BridgeNode::add_connection(const json& connection) {
         << ">" << std::endl;
 
     bool type_found = false;
-
     if (ros_type == ROSType::TOPIC) {
         if (ros_direction == ROSDirection::READ || ros_direction == ROSDirection::BI) {
             auto cyphal_sub = create_cyphal_to_ros_connector(
@@ -193,6 +187,23 @@ void BridgeNode::add_connection(const json& connection) {
                 type_found = true;
             }
         }
+    }
+    else {
+        /*
+        auto ros_service_and_cyphal_sub = create_ros_service(
+            type_id,
+            node_handle,
+            ros_name,
+            interface,
+            write_port,
+            transfer_id_map
+        );*/
+
+        /*if (ros_service_and_cyphal_sub) {
+            ros_subscriptions.push_back(ros_sub.value());
+            cyphal_subscriptions.push_back(std::move(cyphal_sub));
+            type_found = true;
+        }*/
     }
 
     if (!type_found) {

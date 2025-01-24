@@ -25,9 +25,8 @@ public:
         std::cout << "Publishing topic <" << topic_name << ">" << std::endl;
         pub = node_handle->advertise<ToROSType>(topic_name, 5);
     }
-
-    void handler(const typename FromCyphalType::Type& msg, CanardRxTransfer* transfer) override {
-        pub.publish(translate_cyphal_msg<typename FromCyphalType::Type, ToROSType>(msg, transfer));
+    void handler(const std::shared_ptr<typename FromCyphalType::Type>& msg, CanardRxTransfer* transfer) override {
+        pub.publish(translate_cyphal_msg(msg, transfer));
     }
 };
 

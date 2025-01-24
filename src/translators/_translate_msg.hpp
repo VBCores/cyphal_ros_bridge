@@ -24,77 +24,71 @@ TYPE_ALIAS(DiagnosticRecord, uavcan_diagnostic_Record_1_1)
 
 namespace CyphalROS {
 
-template <class FromA, class ToB>
-inline ToB translate_ros_msg(const FromA&);
-
-template <class FromA, class ToB>
-inline ToB translate_cyphal_msg(const FromA&, CanardRxTransfer*);
-
-template <> inline Real32::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
+inline Real32::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
     auto cyphal_msg = Real32::Type();
     cyphal_msg.value = ros_msg->data;
     return cyphal_msg;
 }
 
-template <> inline std_msgs::Float32 translate_cyphal_msg(const Real32::Type& cyphal_msg, CanardRxTransfer* transfer) {
+inline std_msgs::Float32 translate_cyphal_msg(const std::shared_ptr<Real32::Type>& cyphal_msg, CanardRxTransfer* transfer) {
     auto ros_msg = std_msgs::Float32();
-    ros_msg.data = cyphal_msg.value;
+    ros_msg.data = cyphal_msg->value;
     return ros_msg;
 }
 
-template <> inline sensor_msgs::BatteryState translate_cyphal_msg(
-    const VBBatteryState::Type& bat_info,
+inline sensor_msgs::BatteryState translate_cyphal_msg(
+    const std::shared_ptr<VBBatteryState::Type>& bat_info,
     CanardRxTransfer* transfer
 ) {
     sensor_msgs::BatteryState battery;
 
-    battery.voltage = bat_info.voltage.volt;
-    battery.current = bat_info.current.ampere;
-    battery.charge = bat_info.charge.coulomb / 3.6;
-    battery.capacity = bat_info.capacity.coulomb / 3.6;
+    battery.voltage = bat_info->voltage.volt;
+    battery.current = bat_info->current.ampere;
+    battery.charge = bat_info->charge.coulomb / 3.6;
+    battery.capacity = bat_info->capacity.coulomb / 3.6;
     battery.percentage = battery.charge / battery.capacity;
 
-    battery.design_capacity = bat_info.design_capacity.coulomb / 3.6;
+    battery.design_capacity = bat_info->design_capacity.coulomb / 3.6;
 
-    battery.power_supply_status = bat_info.power_supply_status.value;
-    battery.power_supply_health = bat_info.power_supply_health.value;
-    battery.power_supply_technology = bat_info.power_supply_technology.value;
-    battery.present = bat_info.is_present.value == 1 ? true : false;
+    battery.power_supply_status = bat_info->power_supply_status.value;
+    battery.power_supply_health = bat_info->power_supply_health.value;
+    battery.power_supply_technology = bat_info->power_supply_technology.value;
+    battery.present = bat_info->is_present.value == 1 ? true : false;
 
     battery.location = std::string(
-        (char*)bat_info.location.value.elements,
-        bat_info.location.value.count
+        (char*)bat_info->location.value.elements,
+        bat_info->location.value.count
     );
     battery.serial_number = std::string(
-        (char*)bat_info.serial_number.value.elements,
-        bat_info.serial_number.value.count
+        (char*)bat_info->serial_number.value.elements,
+        bat_info->serial_number.value.count
     );
 
     return battery;
 }
 
-template <> inline cyphal_ros::PowerButtons translate_cyphal_msg(
-    const VBPowerButtons::Type& buttons_info,
+inline cyphal_ros::PowerButtons translate_cyphal_msg(
+    const std::shared_ptr<VBPowerButtons::Type>& buttons_info,
     CanardRxTransfer* transfer
 ) {
     cyphal_ros::PowerButtons buttons;
-    buttons.emergency = buttons_info.emergency_button.value;
-    buttons.user = buttons_info.user_button.value;
+    buttons.emergency = buttons_info->emergency_button.value;
+    buttons.user = buttons_info->user_button.value;
     return buttons;
 }
 
-template <> inline diagnostic_msgs::DiagnosticStatus translate_cyphal_msg(
-    const DiagnosticRecord::Type& diagnostic,
+inline diagnostic_msgs::DiagnosticStatus translate_cyphal_msg(
+    const std::shared_ptr<DiagnosticRecord::Type>& diagnostic,
     CanardRxTransfer* transfer
 ) {
     diagnostic_msgs::DiagnosticStatus ros_diagnostic;
 
     ros_diagnostic.name = (boost::format("Node %1%") % transfer->metadata.remote_node_id).str();
     ros_diagnostic.hardware_id = (boost::format("%1%") % transfer->metadata.remote_node_id).str();
-    ros_diagnostic.message = reinterpret_cast<const char*>(diagnostic.text.elements);
+    ros_diagnostic.message = reinterpret_cast<const char*>(diagnostic->text.elements);
 
     uint8_t severity;
-    switch (diagnostic.severity.value) {
+    switch (diagnostic->severity.value) {
         case uavcan_diagnostic_Severity_1_0_TRACE:
             severity = diagnostic_msgs::DiagnosticStatus::OK;
             break;
