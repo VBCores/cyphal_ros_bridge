@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include <tuple>
 
 #include <json.hpp>
 #include <ros/ros.h>
@@ -34,7 +35,6 @@ private:
 
     std::vector<std::unique_ptr<TransferListener>> cyphal_subscriptions;
     std::vector<ros::Subscriber> ros_subscriptions;
-    std::map<CanardPortID, std::shared_ptr<CanardTransferID>> transfer_id_map = {};
 
     void add_connection(const json& connection);
     void hbeat_cb(const ros::TimerEvent& event);

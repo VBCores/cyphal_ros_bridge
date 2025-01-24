@@ -24,7 +24,17 @@
                 "name": "/diagnostic"
             }
         },
-
+        {
+            "type": "HMILed",
+            "cyphal": {
+                "port": 1111,
+                "node": 9
+            },
+            "ros": {
+                "type": "service",
+                "name": "/hmi/led"
+            }
+        },
         {
             "type": "Float32",
             "cyphal": {

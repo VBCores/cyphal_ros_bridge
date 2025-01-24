@@ -179,8 +179,7 @@ void BridgeNode::add_connection(const json& connection) {
                 node_handle,
                 ros_name,
                 interface,
-                write_port,
-                transfer_id_map
+                write_port
             );
             if (ros_sub) {
                 ros_subscriptions.push_back(ros_sub.value());
@@ -195,8 +194,7 @@ void BridgeNode::add_connection(const json& connection) {
             node_handle,
             ros_name,
             interface,
-            write_port,
-            transfer_id_map
+            write_port
         );*/
 
         /*if (ros_service_and_cyphal_sub) {
