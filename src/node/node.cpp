@@ -173,17 +173,19 @@ void BridgeNode::add_connection(const json& connection) {
             if (cyphal_subscriptions.count(read_port)) {
                 cyphal_subscriptions[read_port]->add_listener(ros_read_name, other_node_id);
             }
-            auto cyphal_sub = create_cyphal_to_ros_connector(
-                type_id,
-                node_handle,
-                ros_read_name,
-                interface,
-                read_port,
-                other_node_id
-            );
-            if (cyphal_sub) {
-                cyphal_subscriptions.insert(std::make_pair(read_port, std::move(cyphal_sub)));
-                type_found = true;
+            else {
+                auto cyphal_sub = create_cyphal_to_ros_connector(
+                    type_id,
+                    node_handle,
+                    ros_read_name,
+                    interface,
+                    read_port,
+                    other_node_id
+                );
+                if (cyphal_sub) {
+                    cyphal_subscriptions.insert(std::make_pair(read_port, std::move(cyphal_sub)));
+                    type_found = true;
+                }
             }
         }
         if (ros_direction == ROSDirection::WRITE || ros_direction == ROSDirection::BI) {

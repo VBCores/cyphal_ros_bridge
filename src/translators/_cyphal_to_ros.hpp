@@ -33,6 +33,7 @@ public:
     }
 
     void add_listener(const std::string& topic, CanardNodeID source_node_id) override {
+        std::cout << "Publishing topic <" << topic << ">" << std::endl;
         publishers[source_node_id] = node_handle->advertise<ToROSType>(topic, 5);
     }
 
