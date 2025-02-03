@@ -1,0 +1,54 @@
+{
+    "node_id": 99,
+    "interface": "vcan1",
+    "connections": [
+        {
+            "type": "Diagnostic",
+            "cyphal": {
+                "port": 8184
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "bi",
+                "name": "/diagnostic"
+            }
+        },
+        {
+            "type": "HMILed",
+            "cyphal": {
+                "port": 172,
+                "node": 13
+            },
+            "ros": {
+                "type": "service",
+                "name": "/hmi/led"
+            }
+        },
+        {
+            "type": "Angle",
+            "cyphal": {
+                "port": {
+                    "read": 6998,
+                    "write": 7011,
+                    "node": 13
+                }
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "bi",
+                "name": "/node13/angle"
+            }
+        },
+        {
+            "type": "AngleRequest",
+            "ros": {
+                "type": "service",
+                "name": "/node13/get_streaming_value"
+            },
+            "cyphal": {
+                "register": "storage.streaming_value",
+                "node": 13
+            }
+        }
+    ]
+}
