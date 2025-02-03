@@ -12,6 +12,8 @@
 #include <cyphal/subscriptions/subscription.h>
 #include <voltbro/ros/ros1.hpp>
 
+#include "common.hpp"
+
 using json = nlohmann::json;
 
 namespace CyphalROS {
@@ -33,7 +35,7 @@ private:
     std::shared_ptr<CyphalInterface> interface;
     ros::Timer hbeat_timer;
 
-    std::vector<std::unique_ptr<TransferListener>> cyphal_subscriptions;
+    std::map<CanardPortID, std::unique_ptr<IMultipleListener>> cyphal_subscriptions;
     std::vector<ros::Subscriber> ros_subscriptions;
 
     void add_connection(const json& connection);

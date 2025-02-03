@@ -25,3 +25,10 @@ static inline uint64_t timeMillis() {
         (counter) = tick;                   \
         code_blk                            \
     }
+
+
+class IMultipleListener {
+public:
+    virtual void add_listener(const std::string& topic, CanardNodeID source_node_id) = 0;
+    virtual ~IMultipleListener() {}
+};

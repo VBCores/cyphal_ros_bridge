@@ -17,7 +17,6 @@ void ros_callback_to_cyphal(
     CanardTransferID* transfer_id_ptr,
     const typename FromROSType::ConstPtr& ros_msg_ptr
 ) {
-    //std::cout << +port_id << " " << +(*transfer_id_ptr) << std::endl;
     auto cyphal_msg = translate_ros_msg<
         const typename FromROSType::ConstPtr&,
         typename ToCyphalType::Type

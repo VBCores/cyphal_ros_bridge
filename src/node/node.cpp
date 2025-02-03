@@ -41,8 +41,8 @@ BridgeNode::BridgeNode(const json& config_json, std::shared_ptr<ros::NodeHandle>
 }
 
 BridgeNode::~BridgeNode() {
-    for (auto& ptr: cyphal_subscriptions) {
-        ptr.reset();
+    for (auto& map_item: cyphal_subscriptions) {
+        std::get<std::unique_ptr<IMultipleListener>>(map_item).reset();
     }
 
     if (interface->is_up()) {
@@ -170,6 +170,9 @@ void BridgeNode::add_connection(const json& connection) {
     bool type_found = false;
     if (ros_type == ROSType::TOPIC) {
         if (ros_direction == ROSDirection::READ || ros_direction == ROSDirection::BI) {
+            if (cyphal_subscriptions.count(read_port)) {
+                cyphal_subscriptions[read_port]->add_listener(ros_read_name, other_node_id);
+            }
             auto cyphal_sub = create_cyphal_to_ros_connector(
                 type_id,
                 node_handle,
@@ -179,7 +182,7 @@ void BridgeNode::add_connection(const json& connection) {
                 other_node_id
             );
             if (cyphal_sub) {
-                cyphal_subscriptions.push_back(std::move(cyphal_sub));
+                cyphal_subscriptions.insert(std::make_pair(read_port, std::move(cyphal_sub)));
                 type_found = true;
             }
         }
