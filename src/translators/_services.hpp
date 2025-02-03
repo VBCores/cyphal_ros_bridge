@@ -35,7 +35,6 @@ public:
     ):
         ServiceProvider<ROSType>(node, service_name),
         AbstractSubscription<CyphalResponseType>(interface, port_id, CanardTransferKindResponse),
-        interface(interface),
         target_node_id(target_node_id) {}
 
     // ROS Callback

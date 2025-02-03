@@ -5,7 +5,10 @@
 
 #include <cyphal/cyphal.h>
 
+#include <uavcan/si/unit/angle/Scalar_1_0.h>
 #include <uavcan/primitive/scalar/Real32_1_0.h>
+#include <uavcan/si/unit/angular_velocity/Scalar_1_0.h>
+#include <uavcan/si/unit/velocity/Scalar_1_0.h>
 #include <std_msgs/Float32.h>
 
 #include <voltbro/battery/state_1_0.h>
@@ -14,29 +17,83 @@
 #include <voltbro/battery/buttons_1_0.h>
 #include <cyphal_ros/PowerButtons.h>
 
+#include <voltbro/hmi/beeper_service_1_0.h>
+#include <cyphal_ros/HMIBeeper.h>
+
+#include <voltbro/hmi/led_service_1_0.h>
+#include <cyphal_ros/HMILed.h>
+
 #include <uavcan/diagnostic/Record_1_1.h>
 #include <diagnostic_msgs/DiagnosticStatus.h>
 
 TYPE_ALIAS(Real32, uavcan_primitive_scalar_Real32_1_0)
+TYPE_ALIAS(Velocity, uavcan_si_unit_velocity_Scalar_1_0)
+TYPE_ALIAS(AngularVelocity, uavcan_si_unit_angular_velocity_Scalar_1_0)
 TYPE_ALIAS(VBBatteryState, voltbro_battery_state_1_0)
 TYPE_ALIAS(VBPowerButtons, voltbro_battery_buttons_1_0)
 TYPE_ALIAS(DiagnosticRecord, uavcan_diagnostic_Record_1_1)
+TYPE_ALIAS(Angle, uavcan_si_unit_angle_Scalar_1_0)
+TYPE_ALIAS(LEDServiceRequest, voltbro_hmi_led_service_Request_1_0)
+TYPE_ALIAS(LEDServiceResponse, voltbro_hmi_led_service_Response_1_0)
 
 namespace CyphalROS {
 
-inline Real32::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
+template <class FromA, class ToB>
+inline ToB translate_ros_msg(FromA);
+
+template <class FromA, class ToB>
+inline ToB translate_cyphal_msg(FromA, CanardRxTransfer*);
+
+template <> inline Real32::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
     auto cyphal_msg = Real32::Type();
     cyphal_msg.value = ros_msg->data;
     return cyphal_msg;
 }
 
-inline std_msgs::Float32 translate_cyphal_msg(const std::shared_ptr<Real32::Type>& cyphal_msg, CanardRxTransfer* transfer) {
+template <> inline std_msgs::Float32 translate_cyphal_msg(const std::shared_ptr<Real32::Type>& cyphal_msg, CanardRxTransfer* transfer) {
     auto ros_msg = std_msgs::Float32();
     ros_msg.data = cyphal_msg->value;
     return ros_msg;
 }
 
-inline sensor_msgs::BatteryState translate_cyphal_msg(
+
+template <> inline Angle::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
+    auto cyphal_msg = Angle::Type();
+    cyphal_msg.radian = ros_msg->data;
+    return cyphal_msg;
+}
+
+template <> inline std_msgs::Float32 translate_cyphal_msg(const std::shared_ptr<Angle::Type>& cyphal_msg, CanardRxTransfer* transfer) {
+    auto ros_msg = std_msgs::Float32();
+    ros_msg.data = cyphal_msg->radian;
+    return ros_msg;
+}
+
+template <> inline AngularVelocity::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
+    auto cyphal_msg = AngularVelocity::Type();
+    cyphal_msg.radian_per_second = ros_msg->data;
+    return cyphal_msg;
+}
+
+template <> inline std_msgs::Float32 translate_cyphal_msg(const std::shared_ptr<AngularVelocity::Type>& cyphal_msg, CanardRxTransfer* transfer) {
+    auto ros_msg = std_msgs::Float32();
+    ros_msg.data = cyphal_msg->radian_per_second;
+    return ros_msg;
+}
+
+template <> inline Velocity::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
+    auto cyphal_msg = Velocity::Type();
+    cyphal_msg.meter_per_second = ros_msg->data;
+    return cyphal_msg;
+}
+
+template <> inline std_msgs::Float32 translate_cyphal_msg(const std::shared_ptr<Velocity::Type>& cyphal_msg, CanardRxTransfer* transfer) {
+    auto ros_msg = std_msgs::Float32();
+    ros_msg.data = cyphal_msg->meter_per_second;
+    return ros_msg;
+}
+
+template <> inline sensor_msgs::BatteryState translate_cyphal_msg(
     const std::shared_ptr<VBBatteryState::Type>& bat_info,
     CanardRxTransfer* transfer
 ) {
@@ -67,7 +124,7 @@ inline sensor_msgs::BatteryState translate_cyphal_msg(
     return battery;
 }
 
-inline cyphal_ros::PowerButtons translate_cyphal_msg(
+template <> inline cyphal_ros::PowerButtons translate_cyphal_msg(
     const std::shared_ptr<VBPowerButtons::Type>& buttons_info,
     CanardRxTransfer* transfer
 ) {
@@ -77,7 +134,7 @@ inline cyphal_ros::PowerButtons translate_cyphal_msg(
     return buttons;
 }
 
-inline diagnostic_msgs::DiagnosticStatus translate_cyphal_msg(
+template <> inline diagnostic_msgs::DiagnosticStatus translate_cyphal_msg(
     const std::shared_ptr<DiagnosticRecord::Type>& diagnostic,
     CanardRxTransfer* transfer
 ) {

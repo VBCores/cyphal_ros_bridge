@@ -1,6 +1,6 @@
 {
     "node_id": 99,
-    "interface": "vcan1",
+    "interface": "vcan0",
     "connections": [
         {
             "type": "Diagnostic",
@@ -14,24 +14,13 @@
             }
         },
         {
-            "type": "HMILed",
-            "cyphal": {
-                "port": 172,
-                "node": 13
-            },
-            "ros": {
-                "type": "service",
-                "name": "/hmi/led"
-            }
-        },
-        {
             "type": "Angle",
             "cyphal": {
                 "port": {
                     "read": 6998,
-                    "write": 7011,
-                    "node": 13
-                }
+                    "write": 7011
+                },
+                "node": 13
             },
             "ros": {
                 "type": "topic",
@@ -40,14 +29,27 @@
             }
         },
         {
-            "type": "AngleRequest",
-            "ros": {
-                "type": "service",
-                "name": "/node13/get_streaming_value"
-            },
+            "type": "AngularVelocity",
             "cyphal": {
-                "register": "storage.streaming_value",
+                "port": 6800,
                 "node": 13
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "read",
+                "name": "/node13/angular_velocity"
+            }
+        },
+        {
+            "type": "Velocity",
+            "cyphal": {
+                "port": 6700,
+                "node": 13
+            },
+            "ros": {
+                "type": "topic",
+                "direction": "read",
+                "name": "/node13/velocity"
             }
         }
     ]

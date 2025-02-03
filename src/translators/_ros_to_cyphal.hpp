@@ -13,18 +13,23 @@ namespace CyphalROS {
 template <class FromROSType, class ToCyphalType>
 void ros_callback_to_cyphal(
     InterfacePtr& interface,
-    CanardNodeID port_id,
+    CanardPortID port_id,
     CanardTransferID* transfer_id_ptr,
     const typename FromROSType::ConstPtr& ros_msg_ptr
 ) {
-    typename ToCyphalType::Type cyphal_msg = translate_ros_msg(ros_msg_ptr);
+    //std::cout << +port_id << " " << +(*transfer_id_ptr) << std::endl;
+    auto cyphal_msg = translate_ros_msg<
+        const typename FromROSType::ConstPtr&,
+        typename ToCyphalType::Type
+    >(ros_msg_ptr);
     interface->send_msg<ToCyphalType>(&cyphal_msg, port_id, transfer_id_ptr);
 }
 
 #define MATCH_TYPE_RTC(type_name, ros_type, cyphal_type)                                                     \
     if (type_id == type_name) {                                                                              \
-        auto cb = [interface, port_id](const ros_type::ConstPtr& ros_msg_ptr){                               \
+        auto cb = [interface, port_id](const ros::MessageEvent<ros_type const>& event){                      \
             static CanardTransferID transfer_id = 0;                                                         \
+            const ros_type::ConstPtr& ros_msg_ptr = event.getMessage();                                      \
             ros_callback_to_cyphal<ros_type, cyphal_type>(interface, port_id, &transfer_id, ros_msg_ptr);    \
         };                                                                                                   \
         return node_handle->subscribe<ros_type>(topic_name, 10, cb);                                         \
@@ -38,6 +43,9 @@ inline std::optional<ros::Subscriber> create_ros_to_cyphal_connector(
     const CanardPortID port_id
 ) {
     MATCH_TYPE_RTC("Float32", std_msgs::Float32, Real32)
+    MATCH_TYPE_RTC("Angle", std_msgs::Float32, Angle)
+    MATCH_TYPE_RTC("AngularVelocity", std_msgs::Float32, AngularVelocity)
+    MATCH_TYPE_RTC("Velocity", std_msgs::Float32, Velocity)
 
     return std::nullopt;
 }

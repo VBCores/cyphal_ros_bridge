@@ -94,7 +94,12 @@ void BridgeNode::add_connection(const json& connection) {
         switch (port_info.type()) {
             case json::value_t::object:
                 read_port = static_cast<CanardPortID>(port_info.at("read"));
-                write_port = static_cast<CanardPortID>(port_info.at("write"));
+                if (port_info.contains("write")) {
+                    write_port = static_cast<CanardPortID>(port_info.at("write"));
+                }
+                else {
+                    write_port = read_port;
+                }
                 break;
             default:
                 read_port = write_port = static_cast<CanardPortID>(port_info);
@@ -104,10 +109,12 @@ void BridgeNode::add_connection(const json& connection) {
     if (!has_target_id && has_register_name) {
         parsing_error("Register requires target node");
     }
-    const CanardNodeID target_node_id = has_target_id ? static_cast<CanardNodeID>(cyphal_info.at("node")) : 0;
+    const CanardNodeID other_node_id = has_target_id ? static_cast<CanardNodeID>(cyphal_info.at("node")) : 0;
 
     const auto& ros_info = connection.at("ros");
     const std::string& ros_name = ros_info.at("name");
+    std::string ros_read_name, ros_write_name;
+    ros_read_name = ros_write_name = ros_name;
     ROSType ros_type = ROSType::TOPIC;
     const std::string& ros_type_info = ros_info.value("type", "topic");
     if (ros_type_info == "topic") {
@@ -140,6 +147,8 @@ void BridgeNode::add_connection(const json& connection) {
         }
         else if (ros_direction_info == "bi") {
             ros_direction = ROSDirection::BI;
+            ros_read_name += "/read";
+            ros_write_name += "/write";
         }
         else {
             parsing_error("Unsupported ros.direction: <" + ros_direction_info + ">");
@@ -147,9 +156,9 @@ void BridgeNode::add_connection(const json& connection) {
     }
 
     std::cout << "Creating connection with <type: " << type_id << ", "
-        << "register: " << register_name << ", node_id: " << +target_node_id << ", "
+        << "register: " << register_name << ", node_id: " << +other_node_id << ", "
         << "read_port: " << +read_port << ", write_port: " << + write_port << ", "
-        << "ros_name: " << ros_name << ", "
+        << "ros_read_name: " << ros_read_name << ", " << "ros_write_name: " << ros_write_name << ", "
         << "ros_type: " << (ros_type == ROSType::TOPIC ? "topic" : "service") << ", "
         << "ros_direction: " << (
             ros_direction == ROSDirection::READ ?
@@ -164,9 +173,10 @@ void BridgeNode::add_connection(const json& connection) {
             auto cyphal_sub = create_cyphal_to_ros_connector(
                 type_id,
                 node_handle,
-                ros_name,
+                ros_read_name,
                 interface,
-                read_port
+                read_port,
+                other_node_id
             );
             if (cyphal_sub) {
                 cyphal_subscriptions.push_back(std::move(cyphal_sub));
@@ -177,7 +187,7 @@ void BridgeNode::add_connection(const json& connection) {
             auto ros_sub = create_ros_to_cyphal_connector(
                 type_id,
                 node_handle,
-                ros_name,
+                ros_write_name,
                 interface,
                 write_port
             );
