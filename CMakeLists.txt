@@ -50,7 +50,6 @@ include_directories(
     libs/libvoltbro
     libs/nlohmann
     ${catkin_INCLUDE_DIRS}
-    ${Eigen_INCLUDE_DIRS}
     ${CYPHAL_DIR}
     ${COMMON_LIBS_DIR}
     ${Boost_INCLUDE_DIRS}
