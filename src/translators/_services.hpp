@@ -27,7 +27,7 @@ protected:
         >>
     > requests_info;
     std::mutex requests_info_lock;
-    InterfacePtr interface;
+    InterfacePtr interface;  // FIXME: should not exist. Use interface from AbstractSubscription
 
     CanardNodeID target_node_id;
     CanardTransferID transfer_id = 0;
@@ -74,6 +74,7 @@ public:
             }
             if (!requests_info[current_transfer_id]) {
                 requests_info_lock.unlock();
+                // FIXME: should be a smarter way to do this. Spin-locks or semaphores or something?
                 std::this_thread::sleep_for(10ms);
                 wait_counter++;
                 continue;

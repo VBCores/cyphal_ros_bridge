@@ -59,7 +59,7 @@ BridgeNode::~BridgeNode() {
 
     std::cout << "Freeing CyphalInterface" << std::endl;
     interface.reset();
-    std::cout << "CyphalInterface exists: " << bool(interface) << std::endl;
+    std::cout << "CyphalInterface exists: " << (bool(interface) ? "yes" : "no") << std::endl;
 }
 
 void BridgeNode::hbeat_cb(const ros::TimerEvent& event) {
