@@ -23,7 +23,7 @@ protected:
         CanardTransferID,
         std::optional<std::pair<
             std::shared_ptr<typename CyphalResponseType::Type>,
-            CanardRxTransfer
+            CanardRxTransfer  // FIXME: use shared_ptrs to avoid copying
         >>
     > requests_info;
     std::mutex requests_info_lock;
