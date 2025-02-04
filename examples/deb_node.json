@@ -14,16 +14,38 @@
             }
         },
         {
-          "type": "HMI.Led",
-          "cyphal": {
-              "port": 172,
-              "node": 13
-          },
-          "ros": {
-              "type": "service",
-              "name": "/hmi/led"
-          }
-      },
+            "type": "HMI.Led",
+            "cyphal": {
+                "port": 172,
+                "node": 13
+            },
+            "ros": {
+                "type": "service",
+                "name": "/hmi/led"
+            }
+        },
+        {
+            "type": "Boolean",
+            "ros": {
+                "type": "service",
+                "name": "/node13/storage/static_value"
+            },
+            "cyphal": {
+                "register": "storage.static_value",
+                "node": 13
+            }
+        },
+        {
+            "type": "Float32",
+            "ros": {
+                "type": "service",
+                "name": "/node13/storage/streamin_value"
+            },
+            "cyphal": {
+                "register": "storage.streaming_value",
+                "node": 13
+            }
+        },
         {
             "type": "Angle",
             "cyphal": {

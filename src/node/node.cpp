@@ -116,12 +116,16 @@ void BridgeNode::add_connection(const json& connection) {
 
     const auto& ros_info = connection.at("ros");
     const std::string& ros_name = ros_info.at("name");
+    const bool is_single_topic = ros_info.value("is_single_topic", true);
     std::string ros_read_name, ros_write_name;
     ros_read_name = ros_write_name = ros_name;
     ROSType ros_type = ROSType::TOPIC;
     const std::string& ros_type_info = ros_info.value("type", "topic");
     if (ros_type_info == "topic") {
         ros_type = ROSType::TOPIC;
+        if (has_register_name) {
+            parsing_error("Cyphal errors can only be bound to ros services, not topics");
+        }
     }
     else if (ros_type_info == "service") {
         ros_type = ROSType::SERVICE;
@@ -150,8 +154,10 @@ void BridgeNode::add_connection(const json& connection) {
         }
         else if (ros_direction_info == "bi") {
             ros_direction = ROSDirection::BI;
-            ros_read_name += "/read";
-            ros_write_name += "/write";
+            if (!is_single_topic) {
+                ros_read_name += "/read";
+                ros_write_name += "/write";
+            }
         }
         else {
             parsing_error("Unsupported ros.direction: <" + ros_direction_info + ">");
@@ -209,22 +215,30 @@ void BridgeNode::add_connection(const json& connection) {
         }
     }
     else {
-        auto cyphal_response_sub = create_ros_service(
-            type_id,
-            node_handle,
-            ros_name,
-            interface,
-            write_port,
-            other_node_id
-        );
-        if (cyphal_response_sub) {
-            cyphal_listeners.push_back(std::move(cyphal_response_sub));
-            type_found = true;
+        if (!has_register_name) {
+            auto cyphal_response_sub = create_ros_service(
+                type_id,
+                node_handle,
+                ros_name,
+                interface,
+                write_port,
+                other_node_id
+            );
+            if (cyphal_response_sub) {
+                cyphal_listeners.push_back(std::move(cyphal_response_sub));
+                type_found = true;
+            }
+        }
+        else {
+            // TODO
         }
     }
 
     if (!type_found) {
-        parsing_error("Match not found: <type: " + type_id + ", ros_type: " + ros_type_info + ">");
+        parsing_error(
+            "Match not found: <type: " + type_id + ", ros_type: " + ros_type_info +
+            ", is_register: " + (has_register_name ? "true" : "false") + ">"
+        );
     }
 
 }

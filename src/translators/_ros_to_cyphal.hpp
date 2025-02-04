@@ -7,6 +7,7 @@
 #include <cyphal/cyphal.h>
 
 #include "_translate_msg.hpp"
+#include "common.hpp"
 
 namespace CyphalROS {
 
@@ -24,14 +25,21 @@ void ros_callback_to_cyphal(
     interface->send_msg<ToCyphalType>(&cyphal_msg, port_id, transfer_id_ptr);
 }
 
-#define MATCH_TYPE_RTC(type_name, ros_type, cyphal_type)                                                     \
-    if (type_id == type_name) {                                                                              \
-        auto cb = [interface, port_id](const ros::MessageEvent<ros_type const>& event){                      \
-            static CanardTransferID transfer_id = 0;                                                         \
-            const ros_type::ConstPtr& ros_msg_ptr = event.getMessage();                                      \
-            ros_callback_to_cyphal<ros_type, cyphal_type>(interface, port_id, &transfer_id, ros_msg_ptr);    \
-        };                                                                                                   \
-        return node_handle->subscribe<ros_type>(topic_name, 10, cb);                                         \
+#define MATCH_TYPE_RTC(type_name, ros_type, cyphal_type)                                                              \
+    if (type_id == type_name) {                                                                                       \
+        boost::function<void(const ros::MessageEvent<ros_type const>&)> cb = [                                        \
+            interface, port_id, topic_name                                                                            \
+        ](const ros::MessageEvent<ros_type const>& event) {                                                           \
+            static CanardTransferID transfer_id = 0;                                                                  \
+            const std::string& publisher_name = event.getPublisherName();                                             \
+            if (publisher_name == ros::this_node::getName()) {                                                        \
+                ROS_DEBUG_STREAM("Skipping message on topic <" << topic_name << "> from <" << publisher_name << ">"); \
+                return;                                                                                               \
+            }                                                                                                         \
+            const ros_type::ConstPtr& ros_msg_ptr = event.getMessage();                                               \
+            ros_callback_to_cyphal<ros_type, cyphal_type>(interface, port_id, &transfer_id, ros_msg_ptr);             \
+        };                                                                                                            \
+        return node_handle->subscribe<ros_type>(topic_name, 10, cb);                                                  \
     }
 
 inline std::optional<ros::Subscriber> create_ros_to_cyphal_connector(

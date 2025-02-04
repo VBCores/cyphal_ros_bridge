@@ -35,6 +35,8 @@ TYPE_ALIAS(DiagnosticRecord, uavcan_diagnostic_Record_1_1)
 TYPE_ALIAS(Angle, uavcan_si_unit_angle_Scalar_1_0)
 TYPE_ALIAS(LEDServiceRequest, voltbro_hmi_led_service_Request_1_0)
 TYPE_ALIAS(LEDServiceResponse, voltbro_hmi_led_service_Response_1_0)
+TYPE_ALIAS(BeeperServiceRequest, voltbro_hmi_beeper_service_Request_1_0)
+TYPE_ALIAS(BeeperServiceResponse, voltbro_hmi_beeper_service_Response_1_0)
 
 namespace CyphalROS {
 
@@ -61,6 +63,23 @@ template <> inline cyphal_ros::CallHMILed::Response translate_cyphal_msg(
     const std::shared_ptr<LEDServiceResponse::Type>& cyphal_response, CanardRxTransfer* transfer
 ) {
     auto ros_response = cyphal_ros::CallHMILed::Response();
+    ros_response.accepted = cyphal_response->accepted.value;
+    return ros_response;
+}
+
+template <> inline BeeperServiceRequest::Type translate_ros_msg(
+    const cyphal_ros::CallHMIBeeper::Request& ros_request
+) {
+    auto cyphal_request = BeeperServiceRequest::Type();
+    cyphal_request.duration.second = ros_request.beeper.duration;
+    cyphal_request.frequency.hertz = ros_request.beeper.frequency;
+    return cyphal_request;
+}
+
+template <> inline cyphal_ros::CallHMIBeeper::Response translate_cyphal_msg(
+    const std::shared_ptr<BeeperServiceResponse::Type>& cyphal_response, CanardRxTransfer* transfer
+) {
+    auto ros_response = cyphal_ros::CallHMIBeeper::Response();
     ros_response.accepted = cyphal_response->accepted.value;
     return ros_response;
 }

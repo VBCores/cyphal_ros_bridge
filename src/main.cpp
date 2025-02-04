@@ -5,7 +5,7 @@
 #include "node/node.h"
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "cyphal_bridge");
+    ros::init(argc, argv, "cyphal_ros");
     std::shared_ptr<ros::NodeHandle> nh = std::make_shared<ros::NodeHandle>("~");
 
     std::string config_file_name;
