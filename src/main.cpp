@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 
     std::string config_file_name;
     nh->getParam("config_file", config_file_name);
-    std::cout << "Using <" << config_file_name << ">" << std::endl;
+    ROS_INFO_STREAM("Using <" << config_file_name << ">");
     std::ifstream config_file_stream(config_file_name);
     json config_json = json::parse(config_file_stream);
 

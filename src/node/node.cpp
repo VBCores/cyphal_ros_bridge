@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 #include <cyphal/providers/LinuxCAN.h>
 #include <cyphal/allocators/o1/o1_allocator.h>
@@ -24,7 +25,7 @@ BridgeNode::BridgeNode(const json& config_json, std::shared_ptr<ros::NodeHandle>
     {
     const CanardNodeID node_id = config_json.at("node_id");
     const std::string& interface_name = config_json.at("interface");
-    std::cout << "Setting up cyphal with <node_id: " << +node_id << ", interface: " << interface_name << ">" << std::endl;
+    ROS_INFO_STREAM("Setting up cyphal with <node_id: " << +node_id << ", interface: " << interface_name << ">");
 
     interface = std::shared_ptr<CyphalInterface>(CyphalInterface::create_heap<LinuxCAN, O1Allocator>(
         node_id,
@@ -62,19 +63,21 @@ BridgeNode::~BridgeNode() {
 }
 
 void BridgeNode::hbeat_cb(const ros::TimerEvent& event) {
-    static uint32_t uptime = 0;
     static CanardTransferID hbeat_transfer_id = 0;
-    HBeat::Type heartbeat_msg = {.uptime = uptime, .health = {uavcan_node_Health_1_0_NOMINAL}, .mode = {uavcan_node_Mode_1_0_OPERATIONAL}};
+    HBeat::Type heartbeat_msg = {
+        .uptime = static_cast<uint32_t>(round(ros::Time::now().toSec())),
+        .health = {uavcan_node_Health_1_0_NOMINAL},
+        .mode = {uavcan_node_Mode_1_0_OPERATIONAL}
+    };
     interface->send_msg<HBeat>(
         &heartbeat_msg,
         uavcan_node_Heartbeat_1_0_FIXED_PORT_ID_,
         &hbeat_transfer_id
     );
-    uptime += 1;
 }
 
 void BridgeNode::parsing_error(const std::string& error) {
-    std::cerr << "Parsing error! " << error << std::endl;
+    ROS_FATAL_STREAM("Parsing error! " << error);
     std::exit(1);
 }
 
@@ -155,7 +158,8 @@ void BridgeNode::add_connection(const json& connection) {
         }
     }
 
-    std::cout << "Creating connection with <type: " << type_id << ", "
+    ROS_INFO_STREAM(
+        "Creating connection with <type: " << type_id << ", "
         << "register: " << register_name << ", node_id: " << +other_node_id << ", "
         << "read_port: " << +read_port << ", write_port: " << + write_port << ", "
         << "ros_read_name: " << ros_read_name << ", " << "ros_write_name: " << ros_write_name << ", "
@@ -165,13 +169,15 @@ void BridgeNode::add_connection(const json& connection) {
                 "read" :
                 (ros_direction == ROSDirection::WRITE ? "write" : "bi")
         )
-        << ">" << std::endl;
+        << ">"
+    );
 
     bool type_found = false;
     if (ros_type == ROSType::TOPIC) {
         if (ros_direction == ROSDirection::READ || ros_direction == ROSDirection::BI) {
             if (cyphal_subscriptions.count(read_port)) {
                 cyphal_subscriptions[read_port]->add_listener(ros_read_name, other_node_id);
+                type_found = true;
             }
             else {
                 auto cyphal_sub = create_cyphal_to_ros_connector(
@@ -203,20 +209,18 @@ void BridgeNode::add_connection(const json& connection) {
         }
     }
     else {
-        /*
-        auto ros_service_and_cyphal_sub = create_ros_service(
+        auto cyphal_response_sub = create_ros_service(
             type_id,
             node_handle,
             ros_name,
             interface,
-            write_port
-        );*/
-
-        /*if (ros_service_and_cyphal_sub) {
-            ros_subscriptions.push_back(ros_sub.value());
-            cyphal_subscriptions.push_back(std::move(cyphal_sub));
+            write_port,
+            other_node_id
+        );
+        if (cyphal_response_sub) {
+            cyphal_listeners.push_back(std::move(cyphal_response_sub));
             type_found = true;
-        }*/
+        }
     }
 
     if (!type_found) {

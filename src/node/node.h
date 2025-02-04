@@ -37,6 +37,7 @@ private:
 
     std::map<CanardPortID, std::unique_ptr<IMultipleListener>> cyphal_subscriptions;
     std::vector<ros::Subscriber> ros_subscriptions;
+    std::vector<std::unique_ptr<TransferListener>> cyphal_listeners;
 
     void add_connection(const json& connection);
     void hbeat_cb(const ros::TimerEvent& event);

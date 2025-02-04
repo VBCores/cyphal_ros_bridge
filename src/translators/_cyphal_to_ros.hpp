@@ -28,12 +28,12 @@ public:
     ):
         AbstractSubscription<FromCyphalType>(interface, port_id, CanardTransferKindMessage),
         node_handle(node_handle) {
-        std::cout << "Publishing topic <" << topic_name << ">" << std::endl;
+        ROS_INFO_STREAM("Publishing topic <" << topic_name << ">");
         publishers[source_node_id] = node_handle->advertise<ToROSType>(topic_name, 5);
     }
 
     void add_listener(const std::string& topic, CanardNodeID source_node_id) override {
-        std::cout << "Publishing topic <" << topic << ">" << std::endl;
+        ROS_INFO_STREAM("Publishing topic <" << topic << ">");
         publishers[source_node_id] = node_handle->advertise<ToROSType>(topic, 5);
     }
 

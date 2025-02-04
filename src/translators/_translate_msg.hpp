@@ -18,10 +18,10 @@
 #include <cyphal_ros/PowerButtons.h>
 
 #include <voltbro/hmi/beeper_service_1_0.h>
-#include <cyphal_ros/HMIBeeper.h>
+#include <cyphal_ros/CallHMIBeeper.h>
 
 #include <voltbro/hmi/led_service_1_0.h>
-#include <cyphal_ros/HMILed.h>
+#include <cyphal_ros/CallHMILed.h>
 
 #include <uavcan/diagnostic/Record_1_1.h>
 #include <diagnostic_msgs/DiagnosticStatus.h>
@@ -43,6 +43,27 @@ inline ToB translate_ros_msg(FromA);
 
 template <class FromA, class ToB>
 inline ToB translate_cyphal_msg(FromA, CanardRxTransfer*);
+
+template <> inline LEDServiceRequest::Type translate_ros_msg(
+    const cyphal_ros::CallHMILed::Request& ros_request
+) {
+    auto cyphal_request = LEDServiceRequest::Type();
+    cyphal_request.r.value = ros_request.led.r;
+    cyphal_request.g.value = ros_request.led.g;
+    cyphal_request.b.value = ros_request.led.b;
+    cyphal_request.interface.value = ros_request.led.interface;
+    cyphal_request.duration.second = ros_request.led.duration;
+    cyphal_request.frequency.hertz = ros_request.led.frequency;
+    return cyphal_request;
+}
+
+template <> inline cyphal_ros::CallHMILed::Response translate_cyphal_msg(
+    const std::shared_ptr<LEDServiceResponse::Type>& cyphal_response, CanardRxTransfer* transfer
+) {
+    auto ros_response = cyphal_ros::CallHMILed::Response();
+    ros_response.accepted = cyphal_response->accepted.value;
+    return ros_response;
+}
 
 template <> inline Real32::Type translate_ros_msg(const std_msgs::Float32::ConstPtr& ros_msg) {
     auto cyphal_msg = Real32::Type();
