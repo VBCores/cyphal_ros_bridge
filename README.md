@@ -23,9 +23,9 @@
 
 ```json
 {
-    "node_id": <int>,           // ID Cyphal-узла, под которым работает мост
-    "interface": "<string>",    // CAN-интерфейс (например, can0, vcan0)
-    "connections": [ ... ]      // Список подключений (топики, сервисы, регистры)
+    "node_id": 42,
+    "interface": "<string>",
+    "connections": [ {}, {} ]
 }
 ```
 
